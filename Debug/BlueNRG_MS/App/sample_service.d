@@ -1,7 +1,15 @@
-BlueNRG_MS/App/gatt_db.o: ../BlueNRG_MS/App/gatt_db.c \
+BlueNRG_MS/App/sample_service.o: ../BlueNRG_MS/App/sample_service.c \
+ ../BlueNRG_MS/App/sample_service.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/link_layer.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h \
- ../BlueNRG_MS/App/gatt_db.h ../BlueNRG_MS/Target/bluenrg_conf.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_aci_const.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/link_layer.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/hci_const.h \
+ ../Middlewares/ST/BlueNRG-MS/hci/hci_tl_patterns/Basic/hci_tl.h \
+ ../BlueNRG_MS/Target/hci_tl_interface.h \
+ ../Core/Inc/stm32f4xx_nucleo_bus.h ../Core/Inc/stm32f4xx_nucleo_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -29,14 +37,34 @@ BlueNRG_MS/App/gatt_db.o: ../BlueNRG_MS/App/gatt_db.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h \
+ ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h \
+ ../Middlewares/ST/BlueNRG-MS/utils/ble_list.h \
+ ../BlueNRG_MS/Target/bluenrg_conf.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_server.h \
- ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h \
- ../Middlewares/ST/BlueNRG-MS/includes/compiler.h
+ ../Middlewares/ST/BlueNRG-MS/includes/compiler.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/hci.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/hci_le.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/sm.h ../BlueNRG_MS/App/role_type.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap_aci.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_hal_aci.h \
+ ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo.h \
+ ../Core/Inc/stm32f4xx_nucleo_conf.h \
+ ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h \
+ ../Core/Inc/main.h
+../BlueNRG_MS/App/sample_service.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap.h:
+../Middlewares/ST/BlueNRG-MS/includes/link_layer.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h:
-../BlueNRG_MS/App/gatt_db.h:
-../BlueNRG_MS/Target/bluenrg_conf.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_aci_const.h:
+../Middlewares/ST/BlueNRG-MS/includes/link_layer.h:
+../Middlewares/ST/BlueNRG-MS/includes/hci_const.h:
+../Middlewares/ST/BlueNRG-MS/hci/hci_tl_patterns/Basic/hci_tl.h:
+../BlueNRG_MS/Target/hci_tl_interface.h:
+../Core/Inc/stm32f4xx_nucleo_bus.h:
+../Core/Inc/stm32f4xx_nucleo_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:
@@ -64,7 +92,20 @@ BlueNRG_MS/App/gatt_db.o: ../BlueNRG_MS/App/gatt_db.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
-../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h:
+../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h:
+../Middlewares/ST/BlueNRG-MS/utils/ble_list.h:
+../BlueNRG_MS/Target/bluenrg_conf.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_server.h:
-../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h:
 ../Middlewares/ST/BlueNRG-MS/includes/compiler.h:
+../Middlewares/ST/BlueNRG-MS/includes/hci.h:
+../Middlewares/ST/BlueNRG-MS/includes/hci_le.h:
+../Middlewares/ST/BlueNRG-MS/includes/sm.h:
+../BlueNRG_MS/App/role_type.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap_aci.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_hal_aci.h:
+../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo.h:
+../Core/Inc/stm32f4xx_nucleo_conf.h:
+../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h:
+../Core/Inc/main.h:

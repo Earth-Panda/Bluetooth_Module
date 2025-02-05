@@ -19,22 +19,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_bluenrg_ms.h"
 
-#include "hci.h"
-#include "hci_le.h"
 #include "hci_tl.h"
-#include "link_layer.h"
-#include "sensor.h"
-#include "gatt_db.h"
-
-#include "compiler.h"
+#include "sample_service.h"
+#include "role_type.h"
 #include "bluenrg_utils.h"
-#include "stm32f4xx_nucleo.h"
-#include "bluenrg_gap.h"
+#include "bluenrg_gatt_server.h"
 #include "bluenrg_gap_aci.h"
 #include "bluenrg_gatt_aci.h"
 #include "bluenrg_hal_aci.h"
-#include "sm.h"
-#include "stm32f4xx_hal_tim.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -42,26 +34,33 @@
 
 /* Private defines -----------------------------------------------------------*/
 /**
- * 1 to send environmental and motion data when pushing the user button
- * 0 to send environmental and motion data automatically (period = 1 sec)
+ * Define the role here only if it is not already defined in the project options
+ * For the CLIENT_ROLE comment the line below
+ * For the SERVER_ROLE uncomment the line below
  */
-#define USE_BUTTON 0
+#define SERVER_ROLE
+
+#define BDADDR_SIZE 6
 
 /* Private macros ------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-extern AxesRaw_t x_axes;
-extern AxesRaw_t g_axes;
-extern AxesRaw_t m_axes;
-extern AxesRaw_t q_axes;
+uint8_t bnrg_expansion_board = IDB04A1; /* at startup, suppose the X-NUCLEO-IDB04A1 is used */
+static volatile uint8_t user_button_init_state = 1;
+static volatile uint8_t user_button_pressed = 0;
+
+#ifdef SERVER_ROLE
+  BLE_RoleTypeDef BLE_Role = SERVER;
+#else
+  BLE_RoleTypeDef BLE_Role = CLIENT;
+#endif
 
 extern volatile uint8_t set_connectable;
 extern volatile int     connected;
-/* at startup, suppose the X-NUCLEO-IDB04A1 is used */
-uint8_t bnrg_expansion_board = IDB04A1;
-uint8_t bdaddr[BDADDR_SIZE];
-static volatile uint8_t user_button_init_state = 1;
-static volatile uint8_t user_button_pressed = 0;
+extern volatile uint8_t notification_enabled;
+
+extern volatile uint8_t end_read_tx_char_handle;
+extern volatile uint8_t end_read_rx_char_handle;
 
 /* USER CODE BEGIN PV */
 
@@ -70,9 +69,6 @@ static volatile uint8_t user_button_pressed = 0;
 /* Private function prototypes -----------------------------------------------*/
 static void User_Process(void);
 static void User_Init(void);
-static void Set_Random_Environmental_Values(float *data_t, float *data_p);
-static void Set_Random_Motion_Values(uint32_t cnt);
-static void Reset_Motion_Values(void);
 
 /* USER CODE BEGIN PFP */
 
@@ -103,10 +99,11 @@ void MX_BlueNRG_MS_Init(void)
   /* USER CODE END BlueNRG_MS_Init_PreTreatment */
 
   /* Initialize the peripherals and the BLE Stack */
-  const char *name = "BlueNRG";
+  uint8_t CLIENT_BDADDR[] = {0xbb, 0x00, 0x00, 0xE1, 0x80, 0x02};
+  uint8_t SERVER_BDADDR[] = {0xaa, 0x00, 0x00, 0xE1, 0x80, 0x02};
+  uint8_t bdaddr[BDADDR_SIZE];
   uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
 
-  uint8_t  bdaddr_len_out;
   uint8_t  hwVersion;
   uint16_t fwVersion;
   int ret;
@@ -128,47 +125,52 @@ void MX_BlueNRG_MS_Init(void)
    * command after reset otherwise it will fail.
    */
   hci_reset();
+
   HAL_Delay(100);
 
-  PRINTF("HWver %d\nFWver %d\n", hwVersion, fwVersion);
+  printf("HWver %d, FWver %d\n", hwVersion, fwVersion);
+
   if (hwVersion > 0x30) { /* X-NUCLEO-IDB05A1 expansion board is used */
     bnrg_expansion_board = IDB05A1;
   }
 
-  ret = aci_hal_read_config_data(CONFIG_DATA_RANDOM_ADDRESS, BDADDR_SIZE, &bdaddr_len_out, bdaddr);
+  if (BLE_Role == CLIENT) {
+    BLUENRG_memcpy(bdaddr, CLIENT_BDADDR, sizeof(CLIENT_BDADDR));
+  } else {
+    BLUENRG_memcpy(bdaddr, SERVER_BDADDR, sizeof(SERVER_BDADDR));
+  }
 
+  ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,
+                                  CONFIG_DATA_PUBADDR_LEN,
+                                  bdaddr);
   if (ret) {
-    PRINTF("Read Static Random address failed.\n");
+    printf("Setting BD_ADDR failed 0x%02x.\n", ret);
   }
 
-  if ((bdaddr[5] & 0xC0) != 0xC0) {
-    PRINTF("Static Random address not well formed.\n");
-    while(1);
-  }
-
-  /* GATT Init */
   ret = aci_gatt_init();
-  if(ret){
-    PRINTF("GATT_Init failed.\n");
+  if (ret) {
+    printf("GATT_Init failed.\n");
   }
 
-  /* GAP Init */
-  if (bnrg_expansion_board == IDB05A1) {
-    ret = aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+  if (BLE_Role == SERVER) {
+    if (bnrg_expansion_board == IDB05A1) {
+      ret = aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+    }
+    else {
+      ret = aci_gap_init_IDB04A1(GAP_PERIPHERAL_ROLE_IDB04A1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+    }
   }
   else {
-    ret = aci_gap_init_IDB04A1(GAP_PERIPHERAL_ROLE_IDB04A1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
-  }
-  if (ret != BLE_STATUS_SUCCESS) {
-    PRINTF("GAP_Init failed.\n");
+    if (bnrg_expansion_board == IDB05A1) {
+      ret = aci_gap_init_IDB05A1(GAP_CENTRAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+    }
+    else {
+      ret = aci_gap_init_IDB04A1(GAP_CENTRAL_ROLE_IDB04A1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+    }
   }
 
-  /* Update device name */
-  ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0,
-                                   strlen(name), (uint8_t *)name);
-  if (ret) {
-    PRINTF("aci_gatt_update_char_value failed.\n");
-    while(1);
+  if (ret != BLE_STATUS_SUCCESS) {
+    printf("GAP_Init failed.\n");
   }
 
   ret = aci_gap_set_auth_requirement(MITM_PROTECTION_REQUIRED,
@@ -179,27 +181,21 @@ void MX_BlueNRG_MS_Init(void)
                                      USE_FIXED_PIN_FOR_PAIRING,
                                      123456,
                                      BONDING);
-  if (ret) {
-    PRINTF("aci_gap_set_authentication_requirement failed.\n");
-    while(1);
+  if (ret == BLE_STATUS_SUCCESS) {
+    printf("BLE Stack Initialized.\n");
   }
 
-  PRINTF("BLE Stack Initialized\n");
+  if (BLE_Role == SERVER) {
+    printf("SERVER: BLE Stack Initialized\n");
+    ret = Add_Sample_Service();
 
-  ret = Add_HWServW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS) {
-    PRINTF("BlueMS HW service added successfully.\n");
-  } else {
-    PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
-    while(1);
-  }
+    if (ret == BLE_STATUS_SUCCESS)
+      printf("Service added successfully.\n");
+    else
+      printf("Error while adding service.\n");
 
-  ret = Add_SWServW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS) {
-     PRINTF("BlueMS SW service added successfully.\n");
   } else {
-     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
-     while(1);
+    printf("CLIENT: BLE Stack Initialized\n");
   }
 
   /* Set output power level */
@@ -242,26 +238,41 @@ static void User_Init(void)
 }
 
 /**
- * @brief  Process user input (i.e. pressing the USER button on Nucleo board)
- *         and send the updated acceleration data to the remote client.
+ * @brief  Configure the device as Client or Server and manage the communication
+ *         between a client and a server.
  *
  * @param  None
  * @retval None
  */
 static void User_Process(void)
 {
-  float data_t;
-  float data_p;
-  static uint32_t counter = 0;
-
   if (set_connectable)
   {
-    Set_DeviceConnectable();
+    /* Establish connection with remote device */
+    Make_Connection();
     set_connectable = FALSE;
+    user_button_init_state = BSP_PB_GetState(BUTTON_KEY);
   }
 
-#if USE_BUTTON
-  /* Check if the user has pushed the button */
+  if (BLE_Role == CLIENT)
+  {
+    /* Start TX handle Characteristic dynamic discovery if not yet done */
+    if (connected && !end_read_tx_char_handle){
+      startReadTXCharHandle();
+    }
+    /* Start RX handle Characteristic dynamic discovery if not yet done */
+    else if (connected && !end_read_rx_char_handle){
+      startReadRXCharHandle();
+    }
+
+    if (connected && end_read_tx_char_handle && end_read_rx_char_handle && !notification_enabled)
+    {
+      BSP_LED_Off(LED2); //end of the connection and chars discovery phase
+      enableNotification();
+    }
+  }
+
+  /* Check if the User Button has been pushed */
   if (user_button_pressed)
   {
     /* Debouncing */
@@ -272,111 +283,22 @@ static void User_Process(void)
 
     /* Debouncing */
     HAL_Delay(50);
-#endif
-    BSP_LED_Toggle(LED2);
 
     if (connected)
     {
-      /* Set a random seed */
-      srand(HAL_GetTick());
+      /* Send a toggle command to the remote device */
+      uint8_t data[20] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J'};
+      sendData(data, sizeof(data));
 
-      /* Update emulated Environmental data */
-      Set_Random_Environmental_Values(&data_t, &data_p);
-      BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
-
-      /* Update emulated Acceleration, Gyroscope and Sensor Fusion data */
-      Set_Random_Motion_Values(counter);
-      Acc_Update(&x_axes, &g_axes, &m_axes);
-      Quat_Update(&q_axes);
-
-      counter ++;
-      if (counter == 40) {
-        counter = 0;
-        Reset_Motion_Values();
-      }
-#if !USE_BUTTON
-      HAL_Delay(1000); /* wait 1 sec before sending new data */
-#endif
+      //BSP_LED_Toggle(LED2);  /* Toggle the LED2 locally. */
+                               /* If uncommented be sure the BSP_LED_Init(LED2)
+                                * is called in main().
+                                * E.g. it can be enabled for debugging. */
     }
-#if USE_BUTTON
+
     /* Reset the User Button flag */
     user_button_pressed = 0;
   }
-#endif
-}
-
-/**
- * @brief  Set random values for all environmental sensor data
- * @param  float pointer to temperature data
- * @param  float pointer to pressure data
- * @retval None
- */
-static void Set_Random_Environmental_Values(float *data_t, float *data_p)
-{
-  *data_t = 27.0 + ((uint64_t)rand()*5)/RAND_MAX;     /* T sensor emulation */
-  *data_p = 1000.0 + ((uint64_t)rand()*80)/RAND_MAX; /* P sensor emulation */
-}
-
-/**
- * @brief  Set random values for all motion sensor data
- * @param  uint32_t counter for changing the rotation direction
- * @retval None
- */
-static void Set_Random_Motion_Values(uint32_t cnt)
-{
-  /* Update Acceleration, Gyroscope and Sensor Fusion data */
-  if (cnt < 20) {
-    x_axes.AXIS_X +=  (10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    x_axes.AXIS_Y += -(10  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-    x_axes.AXIS_Z +=  (10  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-    g_axes.AXIS_X +=  (100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
-    g_axes.AXIS_Y += -(100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-    g_axes.AXIS_Z +=  (100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
-    m_axes.AXIS_X +=  (3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    m_axes.AXIS_Y += -(3  + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-    m_axes.AXIS_Z +=  (3  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-
-    q_axes.AXIS_X -= (100  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    q_axes.AXIS_Y += (100  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-    q_axes.AXIS_Z -= (100  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-  }
-  else {
-    x_axes.AXIS_X += -(10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    x_axes.AXIS_Y +=  (10  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-    x_axes.AXIS_Z += -(10  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-    g_axes.AXIS_X += -(100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
-    g_axes.AXIS_Y +=  (100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-    g_axes.AXIS_Z += -(100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
-    m_axes.AXIS_X += -(3  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-    m_axes.AXIS_Y +=  (3  + ((uint64_t)rand()*9*cnt)/RAND_MAX);
-    m_axes.AXIS_Z += -(3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-
-    q_axes.AXIS_X += (200 + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-    q_axes.AXIS_Y -= (150 + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    q_axes.AXIS_Z += (10  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-  }
-
-}
-
-/**
- * @brief  Reset values for all motion sensor data
- * @param  None
- * @retval None
- */
-static void Reset_Motion_Values(void)
-{
-  x_axes.AXIS_X = (x_axes.AXIS_X)%2000 == 0 ? -x_axes.AXIS_X : 10;
-  x_axes.AXIS_Y = (x_axes.AXIS_Y)%2000 == 0 ? -x_axes.AXIS_Y : -10;
-  x_axes.AXIS_Z = (x_axes.AXIS_Z)%2000 == 0 ? -x_axes.AXIS_Z : 10;
-  g_axes.AXIS_X = (g_axes.AXIS_X)%2000 == 0 ? -g_axes.AXIS_X : 100;
-  g_axes.AXIS_Y = (g_axes.AXIS_Y)%2000 == 0 ? -g_axes.AXIS_Y : -100;
-  g_axes.AXIS_Z = (g_axes.AXIS_Z)%2000 == 0 ? -g_axes.AXIS_Z : 100;
-  m_axes.AXIS_X = (g_axes.AXIS_X)%2000 == 0 ? -m_axes.AXIS_X : 3;
-  m_axes.AXIS_Y = (g_axes.AXIS_Y)%2000 == 0 ? -m_axes.AXIS_Y : -3;
-  m_axes.AXIS_Z = (g_axes.AXIS_Z)%2000 == 0 ? -m_axes.AXIS_Z : 3;
-  q_axes.AXIS_X = -q_axes.AXIS_X;
-  q_axes.AXIS_Y = -q_axes.AXIS_Y;
-  q_axes.AXIS_Z = -q_axes.AXIS_Z;
 }
 
 /**

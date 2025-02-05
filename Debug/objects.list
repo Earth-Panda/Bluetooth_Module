@@ -1,6 +1,5 @@
 "./BlueNRG_MS/App/app_bluenrg_ms.o"
-"./BlueNRG_MS/App/gatt_db.o"
-"./BlueNRG_MS/App/sensor.o"
+"./BlueNRG_MS/App/sample_service.o"
 "./BlueNRG_MS/Target/hci_tl_interface.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f4xx_hal_msp.o"

@@ -6,18 +6,15 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../BlueNRG_MS/App/app_bluenrg_ms.c \
-../BlueNRG_MS/App/gatt_db.c \
-../BlueNRG_MS/App/sensor.c 
+../BlueNRG_MS/App/sample_service.c 
 
 OBJS += \
 ./BlueNRG_MS/App/app_bluenrg_ms.o \
-./BlueNRG_MS/App/gatt_db.o \
-./BlueNRG_MS/App/sensor.o 
+./BlueNRG_MS/App/sample_service.o 
 
 C_DEPS += \
 ./BlueNRG_MS/App/app_bluenrg_ms.d \
-./BlueNRG_MS/App/gatt_db.d \
-./BlueNRG_MS/App/sensor.d 
+./BlueNRG_MS/App/sample_service.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -27,7 +24,7 @@ BlueNRG_MS/App/%.o BlueNRG_MS/App/%.su BlueNRG_MS/App/%.cyclo: ../BlueNRG_MS/App
 clean: clean-BlueNRG_MS-2f-App
 
 clean-BlueNRG_MS-2f-App:
-	-$(RM) ./BlueNRG_MS/App/app_bluenrg_ms.cyclo ./BlueNRG_MS/App/app_bluenrg_ms.d ./BlueNRG_MS/App/app_bluenrg_ms.o ./BlueNRG_MS/App/app_bluenrg_ms.su ./BlueNRG_MS/App/gatt_db.cyclo ./BlueNRG_MS/App/gatt_db.d ./BlueNRG_MS/App/gatt_db.o ./BlueNRG_MS/App/gatt_db.su ./BlueNRG_MS/App/sensor.cyclo ./BlueNRG_MS/App/sensor.d ./BlueNRG_MS/App/sensor.o ./BlueNRG_MS/App/sensor.su
+	-$(RM) ./BlueNRG_MS/App/app_bluenrg_ms.cyclo ./BlueNRG_MS/App/app_bluenrg_ms.d ./BlueNRG_MS/App/app_bluenrg_ms.o ./BlueNRG_MS/App/app_bluenrg_ms.su ./BlueNRG_MS/App/sample_service.cyclo ./BlueNRG_MS/App/sample_service.d ./BlueNRG_MS/App/sample_service.o ./BlueNRG_MS/App/sample_service.su
 
 .PHONY: clean-BlueNRG_MS-2f-App
 

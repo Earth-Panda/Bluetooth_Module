@@ -105,8 +105,6 @@ int main(void)
 
   MX_BlueNRG_MS_Process();
     /* USER CODE BEGIN 3 */
-  	uart_buf_len = sprintf(uart_buf, "Hello :D\n"); // end line
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 1000); // transmits the data
   }
   /* USER CODE END 3 */
 }
@@ -226,6 +224,9 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
