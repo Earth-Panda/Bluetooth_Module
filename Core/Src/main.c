@@ -23,6 +23,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "stm32f4xx.h"
+#include "AS7421.h"
+#include <inttypes.h>
+#include <limits.h>
+#include "mux.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define NUM_CHANNELS		64
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -67,46 +72,89 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  MX_BlueNRG_MS_Init();
-  /* USER CODE BEGIN 2 */
-  char uart_buf[100];
-  int uart_buf_len;
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_USART2_UART_Init();
+	MX_BlueNRG_MS_Init();
+	/* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+//	I2C1_Init();
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
+	/* Mux *
+	 * Note: calling enableChannel closes all the mux outputs before opening the specified channel
+	 * Switching between channels puts previously ON channel in idle mode (LED still on but not measuring)
+	 * Sensor state of previously ON channel resets to sleep mode with power on reset (i.e. power off then power on)*/
+//	enableChannel(CHANNEL_0);
 
-  MX_BlueNRG_MS_Process();
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+	/* Sensor */
+	// Containers to receive channel data
+	uint16_t channel_data[CHANNELSIZE];
+	uint16_t temp_data[CHANNELSIZE];
+
+//	startup();
+//	HAL_Delay(2000);
+//	startMeasurements(true);
+
+	//	unsigned long start = getMillis();
+	//	unsigned long duration = 120000; // aka 2mins
+	int count = 0;
+
+	/* USER CODE END 2 */
+
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1)
+	{
+//		if(measurementActive()){
+//			performMeasurements(channel_data, temp_data);
+//			printf("%i\n\r", -1);
+//			printf("%i\n\r", count);
+//			for (int i = 0; i < NUM_CHANNELS; i++)
+//			{
+//	//			printf("Channel %i: %f\n\r", i+1, channel_data[i]);
+//				printf("%d\n\r", channel_data[i]);
+//			}
+//			count++;
+//			if(count ==	INT_MAX){
+//				count = 0;
+//			}
+//			//unsigned long end = getMillis();
+//			// If in continuous mode, specify duration of test
+//			//if (end - start > duration)
+//			//{
+//			//	break;
+//			//}
+//		} else {
+//			stopMeasurements();
+//			sleep();
+//		}
+
+	/* USER CODE END WHILE */
+
+		MX_BlueNRG_MS_Process();
+	/* USER CODE BEGIN 3 */
+	}
+	/* USER CODE END 3 */
 }
 
 /**

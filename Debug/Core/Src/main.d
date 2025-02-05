@@ -32,7 +32,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo.h \
  ../Core/Inc/stm32f4xx_nucleo_conf.h \
  ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h \
- ../BlueNRG_MS/App/app_bluenrg_ms.h
+ ../BlueNRG_MS/App/app_bluenrg_ms.h ../Core/Inc/AS7421.h \
+ ../Core/Inc/uart.h ../Core/Inc/i2c.h ../Core/Inc/systick.h \
+ ../Core/Inc/mux.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -69,3 +71,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/stm32f4xx_nucleo_conf.h:
 ../Drivers/BSP/STM32F4xx_Nucleo/stm32f4xx_nucleo_errno.h:
 ../BlueNRG_MS/App/app_bluenrg_ms.h:
+../Core/Inc/AS7421.h:
+../Core/Inc/uart.h:
+../Core/Inc/i2c.h:
+../Core/Inc/systick.h:
+../Core/Inc/mux.h:
