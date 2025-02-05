@@ -124,44 +124,22 @@ fail:
  */
 void Make_Connection(void)
 {
-  tBleStatus ret;
+	tBleStatus ret;
 
-  if(BLE_Role == CLIENT) {
+	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,'A','l','l','e','r','S','p','e','X'};
 
-    printf("Client Create Connection\n");
-    tBDAddr bdaddr = {0xaa, 0x00, 0x00, 0xE1, 0x80, 0x02};
+	/* disable scan response */
+	hci_le_set_scan_resp_data(0,NULL);
 
-    BSP_LED_On(LED2); //To indicate the start of the connection and discovery phase
-
-    /*
-    Scan_Interval, Scan_Window, Peer_Address_Type, Peer_Address, Own_Address_Type, Conn_Interval_Min,
-    Conn_Interval_Max, Conn_Latency, Supervision_Timeout, Conn_Len_Min, Conn_Len_Max
-    */
-    ret = aci_gap_create_connection(SCAN_P, SCAN_L, PUBLIC_ADDR, bdaddr, PUBLIC_ADDR, CONN_P1, CONN_P2, 0,
-                                    SUPERV_TIMEOUT, CONN_L1 , CONN_L2);
-
-    if (ret != 0){
-      printf("Error while starting connection.\n");
-      HAL_Delay(100);
-    }
-
-  } else  {
-
-    const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,'B','l','u','e','N','R','G','_','C','h','a','t'};
-
-    /* disable scan response */
-    hci_le_set_scan_resp_data(0,NULL);
-
-    PRINTF("General Discoverable Mode ");
-    /*
-    Advertising_Event_Type, Adv_Interval_Min, Adv_Interval_Max, Address_Type, Adv_Filter_Policy,
-    Local_Name_Length, Local_Name, Service_Uuid_Length, Service_Uuid_List, Slave_Conn_Interval_Min,
-    Slave_Conn_Interval_Max
-    */
-    ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN, ADV_INTERV_MAX, PUBLIC_ADDR,
-                                   NO_WHITE_LIST_USE, 13, local_name, 0, NULL, 0, 0);
-    PRINTF("%d\n",ret);
-  }
+	PRINTF("General Discoverable Mode ");
+	/*
+	Advertising_Event_Type, Adv_Interval_Min, Adv_Interval_Max, Address_Type, Adv_Filter_Policy,
+	Local_Name_Length, Local_Name, Service_Uuid_Length, Service_Uuid_List, Slave_Conn_Interval_Min,
+	Slave_Conn_Interval_Max
+	*/
+	ret = aci_gap_set_discoverable(ADV_DATA_TYPE, ADV_INTERV_MIN, ADV_INTERV_MAX, PUBLIC_ADDR,
+							   NO_WHITE_LIST_USE, 13, local_name, 0, NULL, 0, 0);
+	PRINTF("%d\n",ret);
 }
 
 /**
