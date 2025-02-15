@@ -72,89 +72,93 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
 
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_USART2_UART_Init();
-	MX_BlueNRG_MS_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_BlueNRG_MS_Init();
+  /* USER CODE BEGIN 2 */
 
-//	I2C1_Init();
+	I2C1_Init();
 
 	/* Mux *
 	 * Note: calling enableChannel closes all the mux outputs before opening the specified channel
 	 * Switching between channels puts previously ON channel in idle mode (LED still on but not measuring)
 	 * Sensor state of previously ON channel resets to sleep mode with power on reset (i.e. power off then power on)*/
-//	enableChannel(CHANNEL_0);
+	enableChannel(CHANNEL_1);
 
 	/* Sensor */
 	// Containers to receive channel data
 	uint16_t channel_data[CHANNELSIZE];
 	uint16_t temp_data[CHANNELSIZE];
 
-//	startup();
-//	HAL_Delay(2000);
-//	startMeasurements(true);
 
-	//	unsigned long start = getMillis();
-	//	unsigned long duration = 120000; // aka 2mins
+	startup();
+	HAL_Delay(2000);
+	startMeasurements(true);
+
 	int count = 0;
 
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-//		if(measurementActive()){
-//			performMeasurements(channel_data, temp_data);
-//			printf("%i\n\r", -1);
-//			printf("%i\n\r", count);
-//			for (int i = 0; i < NUM_CHANNELS; i++)
-//			{
-//	//			printf("Channel %i: %f\n\r", i+1, channel_data[i]);
-//				printf("%d\n\r", channel_data[i]);
-//			}
-//			count++;
-//			if(count ==	INT_MAX){
-//				count = 0;
-//			}
-//			//unsigned long end = getMillis();
-//			// If in continuous mode, specify duration of test
-//			//if (end - start > duration)
-//			//{
-//			//	break;
-//			//}
-//		} else {
-//			stopMeasurements();
-//			sleep();
-//		}
+		char uart_buf[1000];
+		int uart_buf_len;
 
-	/* USER CODE END WHILE */
+		if(measurementActive()){
+			performMeasurements(channel_data, temp_data);
+			for (int i = 0; i < NUM_CHANNELS; i++)
+			{
+				uart_buf_len = sprintf(uart_buf, "%d\n\r", channel_data[i]);
+				HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+			}
+			count++;
+			if(count ==	INT_MAX){
+				count = 0;
+			}
 
-		MX_BlueNRG_MS_Process();
-	/* USER CODE BEGIN 3 */
+		} else {
+			stopMeasurements();
+			sleep();
+		}
+
+    /* USER CODE END WHILE */
+//		uint16_t channel_data[64] = {
+//		    5234, 16234, 4821, 9532, 30578, 19283, 5721, 14876,
+//		    32890, 4502, 6348, 29876, 521, 12478, 36541, 21456,
+//		    39874, 1205, 65432, 21780, 4532, 29765, 18230, 4732,
+//		    60231, 5482, 31876, 12897, 27654, 38945, 1243, 5623,
+//		    45230, 7812, 65789, 2431, 57234, 3120, 8293, 27145,
+//		    61023, 2948, 38572, 1482, 6321, 24832, 5472, 19345,
+//		    32768, 9823, 54781, 20845, 7312, 48521, 3912, 27682,
+//		    5481, 28754, 21879, 39754, 6821, 13287, 4895, 62014
+//		};
+		MX_BlueNRG_MS_Process(channel_data);
+    /* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**

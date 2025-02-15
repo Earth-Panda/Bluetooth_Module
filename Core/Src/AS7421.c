@@ -105,7 +105,7 @@ bool isConnected()
 //Returns false if sensor is not detected
 bool initialize()
 {
-	uart2_rxtx_init();
+//	uart2_rxtx_init();
 	I2C1_Init();
 	fpu_enable();
 

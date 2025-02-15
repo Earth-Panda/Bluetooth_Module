@@ -67,7 +67,7 @@ extern volatile uint8_t end_read_rx_char_handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-static void User_Process(void);
+static void User_Process(uint16_t channel_data[64]);
 static void User_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -190,13 +190,13 @@ void MX_BlueNRG_MS_Init(void)
 /*
  * BlueNRG-MS background task
  */
-void MX_BlueNRG_MS_Process(void)
+void MX_BlueNRG_MS_Process(uint16_t channel_data[64])
 {
   /* USER CODE BEGIN BlueNRG_MS_Process_PreTreatment */
 
   /* USER CODE END BlueNRG_MS_Process_PreTreatment */
 
-  User_Process();
+  User_Process(channel_data);
   hci_user_evt_proc();
 
   /* USER CODE BEGIN BlueNRG_MS_Process_PostTreatment */
@@ -225,7 +225,7 @@ static void User_Init(void)
  * @param  None
  * @retval None
  */
-static void User_Process(void)
+static void User_Process(uint16_t channel_data[64])
 {
   if (set_connectable)
   {
@@ -250,8 +250,15 @@ static void User_Process(void)
     if (connected)
     {
       /* Send a toggle command to the remote device */
-      uint8_t data[20] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J'};
-      sendData(data, sizeof(data));
+      //uint8_t data[20] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J'};
+    	char ble_buf[1000];
+		int ble_buf_len;
+
+    	for (int i = 0; i < 64; i++){
+    		ble_buf_len = sprintf(ble_buf, "%d", channel_data[i]);
+    		sendData(ble_buf, ble_buf_len);
+    		HAL_Delay(50);
+    	}
 
       //BSP_LED_Toggle(LED2);  /* Toggle the LED2 locally. */
                                /* If uncommented be sure the BSP_LED_Init(LED2)
