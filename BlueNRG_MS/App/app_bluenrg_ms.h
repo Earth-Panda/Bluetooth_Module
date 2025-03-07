@@ -30,7 +30,7 @@
 
 /* Exported Functions --------------------------------------------------------*/
 void MX_BlueNRG_MS_Init(void);
-void MX_BlueNRG_MS_Process(uint16_t channel_data[64]);
+void MX_BlueNRG_MS_Process(float channel_data[64]);
 
 #ifdef __cplusplus
 }

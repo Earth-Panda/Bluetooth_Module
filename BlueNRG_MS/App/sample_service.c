@@ -126,7 +126,7 @@ void Make_Connection(void)
 {
 	tBleStatus ret;
 
-	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,'A','l','l','e','r','S','p','e','X'};
+	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,'A','l','l','e','r','S','p','e','c','X'};
 
 	/* disable scan response */
 	hci_le_set_scan_resp_data(0,NULL);

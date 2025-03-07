@@ -67,7 +67,7 @@ extern volatile uint8_t end_read_rx_char_handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-static void User_Process(uint16_t channel_data[64]);
+static void User_Process(float channel_data[64]);
 static void User_Init(void);
 
 /* USER CODE BEGIN PFP */
@@ -190,7 +190,7 @@ void MX_BlueNRG_MS_Init(void)
 /*
  * BlueNRG-MS background task
  */
-void MX_BlueNRG_MS_Process(uint16_t channel_data[64])
+void MX_BlueNRG_MS_Process(float channel_data[64])
 {
   /* USER CODE BEGIN BlueNRG_MS_Process_PreTreatment */
 
@@ -225,7 +225,7 @@ static void User_Init(void)
  * @param  None
  * @retval None
  */
-static void User_Process(uint16_t channel_data[64])
+static void User_Process(float channel_data[64])
 {
   if (set_connectable)
   {
@@ -236,8 +236,6 @@ static void User_Process(uint16_t channel_data[64])
   }
 
   /* Check if the User Button has been pushed */
-  if (user_button_pressed)
-  {
     /* Debouncing */
     HAL_Delay(50);
 
@@ -249,26 +247,31 @@ static void User_Process(uint16_t channel_data[64])
 
     if (connected)
     {
-      /* Send a toggle command to the remote device */
-      //uint8_t data[20] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J'};
-    	char ble_buf[1000];
-		int ble_buf_len;
+    	/* Handshake */
+    	uint8_t start[1] = {'F'};
+    	uint8_t end[1] = {'L'};
+    	uint8_t ble_buf[500];
+		uint8_t ble_buf_len = 0;
+
+		sendData(start, sizeof(start));
 
     	for (int i = 0; i < 64; i++){
-    		ble_buf_len = sprintf(ble_buf, "%d", channel_data[i]);
+    		ble_buf_len = sprintf(ble_buf, "%f", channel_data[i]);
     		sendData(ble_buf, ble_buf_len);
     		HAL_Delay(50);
     	}
 
+//		for (int i = 0; i < 64; i++){
+//			ble_buf_len += sprintf (ble_buf + ble_buf_len, "%d,", channel_data[i]);
+//		}
+//		sendData(ble_buf, ble_buf_len);
+//
+    	sendData(end, sizeof(end));
       //BSP_LED_Toggle(LED2);  /* Toggle the LED2 locally. */
                                /* If uncommented be sure the BSP_LED_Init(LED2)
                                 * is called in main().
                                 * E.g. it can be enabled for debugging. */
     }
-
-    /* Reset the User Button flag */
-    user_button_pressed = 0;
-  }
 }
 
 /**

@@ -38,6 +38,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define NUM_CHANNELS		64
+#define AVERAGE_COUNT       30
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -72,31 +73,31 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  MX_BlueNRG_MS_Init();
-  /* USER CODE BEGIN 2 */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_USART2_UART_Init();
+	MX_BlueNRG_MS_Init();
+	/* USER CODE BEGIN 2 */
 
 	I2C1_Init();
 
@@ -111,6 +112,8 @@ int main(void)
 	uint16_t channel_data[CHANNELSIZE];
 	uint16_t temp_data[CHANNELSIZE];
 
+	uint32_t sum_data[CHANNELSIZE] = {0};
+	float avg_data[CHANNELSIZE] = {0};
 
 	startup();
 	HAL_Delay(2000);
@@ -118,47 +121,36 @@ int main(void)
 
 	int count = 0;
 
-  /* USER CODE END 2 */
+	/* Infinite loop */
+	while (measurementActive()) {
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-	while (1)
-	{
 		char uart_buf[1000];
 		int uart_buf_len;
+		performMeasurements(channel_data, temp_data);
+		printf("%i\n\r", -1);
+		printf("%i\n\r", count);
 
-		if(measurementActive()){
-			performMeasurements(channel_data, temp_data);
-			for (int i = 0; i < NUM_CHANNELS; i++)
-			{
-				uart_buf_len = sprintf(uart_buf, "%d\n\r", channel_data[i]);
-				HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
-			}
-			count++;
-			if(count ==	INT_MAX){
-				count = 0;
-			}
-
-		} else {
-			stopMeasurements();
-			sleep();
+		// Accumulate the readings
+		for (int i = 0; i < CHANNELSIZE; i++){
+		   sum_data[i] += channel_data[i];
 		}
 
-    /* USER CODE END WHILE */
-//		uint16_t channel_data[64] = {
-//		    5234, 16234, 4821, 9532, 30578, 19283, 5721, 14876,
-//		    32890, 4502, 6348, 29876, 521, 12478, 36541, 21456,
-//		    39874, 1205, 65432, 21780, 4532, 29765, 18230, 4732,
-//		    60231, 5482, 31876, 12897, 27654, 38945, 1243, 5623,
-//		    45230, 7812, 65789, 2431, 57234, 3120, 8293, 27145,
-//		    61023, 2948, 38572, 1482, 6321, 24832, 5472, 19345,
-//		    32768, 9823, 54781, 20845, 7312, 48521, 3912, 27682,
-//		    5481, 28754, 21879, 39754, 6821, 13287, 4895, 62014
-//		};
-		MX_BlueNRG_MS_Process(channel_data);
-    /* USER CODE BEGIN 3 */
+		if (count >= AVERAGE_COUNT){
+			for (int i = 0; i < CHANNELSIZE; i++){
+				avg_data[i] = (float)sum_data[i] / AVERAGE_COUNT;
+				sum_data[i] = 0; //Reset sum for next averaging window
+			}
+
+			for (int i = 0; i < CHANNELSIZE; i++){
+				uart_buf_len = sprintf(uart_buf, "%.3f\n\r", avg_data[i]);
+				HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
+
+			}
+			MX_BlueNRG_MS_Process(avg_data);
+			count = 0;
+		}
+		count++;
 	}
-  /* USER CODE END 3 */
 }
 
 /**
